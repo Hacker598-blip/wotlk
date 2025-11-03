@@ -229,6 +229,68 @@
             margin-bottom: 10px;
         }
 
+        /* Comments Section */
+        .comments-section {
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #333;
+            border-radius: 10px;
+            padding: 30px;
+            margin-top: 30px;
+        }
+
+        .comments-section h2 {
+            color: #ffd700;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .comments-container {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .comment {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 3px solid #4d94ff;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .comment-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .comment-author {
+            color: #4d94ff;
+            font-weight: bold;
+        }
+
+        .comment-time {
+            color: #888;
+        }
+
+        .comment-text {
+            color: #e0e0e0;
+            line-height: 1.4;
+        }
+
+        .comment-new {
+            border-left-color: #4CAF50;
+            background: rgba(76, 175, 80, 0.1);
+        }
+
         /* Footer */
         .footer {
             text-align: center;
@@ -277,6 +339,10 @@
             .header h1 {
                 font-size: 2em;
             }
+            
+            .comment-header {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -284,7 +350,7 @@
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>Venta de Oro WotLK 3.3.5a - UltimoWoW</h1>
+            <h1>🏰 Venta de Oro WotLK 3.3.5a - UltimoWoW</h1>
             <div class="server-info">World of Warcraft: Wrath of the Lich King - Realm: logon.ultimoWoW.com</div>
         </div>
 
@@ -415,6 +481,14 @@
             </div>
         </div>
 
+        <!-- Comments Section -->
+        <div class="comments-section">
+            <h2>💬 Comentarios de Nuestros Clientes</h2>
+            <div class="comments-container" id="commentsContainer">
+                <!-- Los comentarios se generarán automáticamente aquí -->
+            </div>
+        </div>
+
         <!-- Footer -->
         <div class="footer">
             <p>© 2024 FrostGoldX - World of Warcraft Wrath of the Lich King 3.3.5a - UltimoWoW</p>
@@ -424,6 +498,183 @@
     </div>
 
     <script>
+        // Sistema de comentarios automático
+        class CommentSystem {
+            constructor() {
+                this.comments = [];
+                this.usedComments = new Set();
+                this.intervalIds = [];
+                this.loadComments();
+                this.startCommentGeneration();
+            }
+
+            // Cargar comentarios guardados
+            loadComments() {
+                const savedComments = localStorage.getItem('frostgoldx_comments');
+                if (savedComments) {
+                    this.comments = JSON.parse(savedComments);
+                    this.displayComments();
+                }
+            }
+
+            // Guardar comentarios
+            saveComments() {
+                localStorage.setItem('frostgoldx_comments', JSON.stringify(this.comments));
+            }
+
+            // Lista de comentarios predefinidos
+            getCommentTemplates() {
+                return [
+                    { text: "¡Excelente servicio! Compré 5k oro y en menos de 10 minutos lo tenía. 100% recomendado.", author: "Carlos M." },
+                    { text: "Por fin un servicio confiable en Cuba. El oro llegó rápido y sin problemas.", author: "Ana L." },
+                    { text: "Segunda vez que compro, siempre cumplen. Mejor precio que otros sitios.", author: "Javier R." },
+                    { text: "El soporte responde rápido por WhatsApp. Muy profesional todo el proceso.", author: "Laura G." },
+                    { text: "Compré el paquete de 10k y pude comprar mi montura épica. ¡Gracias FrostGoldX!", author: "Miguel T." },
+                    { text: "Transferí por MiTransfer y todo perfecto. En 15 minutos tenía mi oro.", author: "Sofia C." },
+                    { text: "Recomendado por un amigo y no me arrepiento. Servicio serio y confiable.", author: "Roberto F." },
+                    { text: "El mejor servicio de oro para UltimoWoW. Precios justos y entrega rápida.", author: "Elena P." },
+                    { text: "Probé con 1k primero por seguridad, y todo salió bien. Ahora compré 5k más.", author: "David S." },
+                    { text: "¡Increíble! Pensé que sería más complicado pero fue super fácil y rápido.", author: "Carmen V." },
+                    { text: "Contacté a Talokoj en el juego y me guió todo el proceso. Muy amable.", author: "Alejandro M." },
+                    { text: "Por fin puedo disfrutar del endgame sin farmear horas. Vale cada peso.", author: "Patricia R." },
+                    { text: "El descuento por comprar más oro es real. Ahorré bastante con el paquete épico.", author: "Fernando L." },
+                    { text: "Servicio 24/7 como prometen. Compré a las 2 AM y todo funcionó perfecto.", author: "Isabel G." },
+                    { text: "Después de malas experiencias con otros, FrostGoldX es el único confiable.", author: "Raúl D." }
+                ];
+            }
+
+            // Obtener un comentario aleatorio no repetido
+            getRandomComment() {
+                const templates = this.getCommentTemplates();
+                const availableComments = templates.filter(t => !this.usedComments.has(t.text));
+                
+                if (availableComments.length === 0) {
+                    // Si ya usamos todos, reiniciamos
+                    this.usedComments.clear();
+                    return this.getRandomComment();
+                }
+
+                const randomComment = availableComments[Math.floor(Math.random() * availableComments.length)];
+                this.usedComments.add(randomComment.text);
+                return randomComment;
+            }
+
+            // Formatear hora actual
+            getCurrentTime() {
+                const now = new Date();
+                return now.toLocaleTimeString('es-CU', { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    hour12: false 
+                });
+            }
+
+            // Generar fecha relativa
+            getRelativeDate() {
+                const now = new Date();
+                const daysAgo = Math.floor(Math.random() * 7); // Últimos 7 días
+                const date = new Date(now);
+                date.setDate(now.getDate() - daysAgo);
+                
+                if (daysAgo === 0) return 'Hoy';
+                if (daysAgo === 1) return 'Ayer';
+                return `Hace ${daysAgo} días`;
+            }
+
+            // Agregar comentario
+            addComment(commentData, isNew = false) {
+                const comment = {
+                    ...commentData,
+                    time: this.getCurrentTime(),
+                    date: this.getRelativeDate(),
+                    id: Date.now() + Math.random(),
+                    isNew: isNew
+                };
+
+                this.comments.unshift(comment);
+                if (this.comments.length > 50) {
+                    this.comments = this.comments.slice(0, 50);
+                }
+                
+                this.saveComments();
+                this.displayComments();
+            }
+
+            // Mostrar comentarios
+            displayComments() {
+                const container = document.getElementById('commentsContainer');
+                container.innerHTML = '';
+
+                this.comments.forEach(comment => {
+                    const commentElement = document.createElement('div');
+                    commentElement.className = `comment ${comment.isNew ? 'comment-new' : ''}`;
+                    commentElement.innerHTML = `
+                        <div class="comment-header">
+                            <span class="comment-author">${comment.author}</span>
+                            <span class="comment-time">${comment.date} a las ${comment.time}</span>
+                        </div>
+                        <div class="comment-text">${comment.text}</div>
+                    `;
+                    container.appendChild(commentElement);
+                });
+            }
+
+            // Iniciar generación automática de comentarios
+            startCommentGeneration() {
+                // Patrón de actividad variable
+                const patterns = [
+                    { delay: 30000, duration: 180000, interval: 15000 },  // Ráfaga rápida (30s espera, luego cada 15s por 3min)
+                    { delay: 120000, duration: 300000, interval: 30000 }, // Moderado (2min espera, luego cada 30s por 5min)
+                    { delay: 300000, duration: 0, interval: 60000 },      // Lento (5min espera, luego cada 60s)
+                    { delay: 480000, duration: 240000, interval: 20000 }, // Mixto (8min espera, luego cada 20s por 4min)
+                ];
+
+                let patternIndex = 0;
+
+                const runPattern = () => {
+                    const pattern = patterns[patternIndex];
+                    
+                    setTimeout(() => {
+                        // Generar comentarios durante la duración del patrón
+                        if (pattern.duration > 0) {
+                            const burstInterval = setInterval(() => {
+                                this.addComment(this.getRandomComment(), true);
+                            }, pattern.interval);
+
+                            setTimeout(() => {
+                                clearInterval(burstInterval);
+                                patternIndex = (patternIndex + 1) % patterns.length;
+                                runPattern();
+                            }, pattern.duration);
+                        } else {
+                            // Patrón continuo lento
+                            const slowInterval = setInterval(() => {
+                                this.addComment(this.getRandomComment(), true);
+                            }, pattern.interval);
+
+                            this.intervalIds.push(slowInterval);
+                        }
+                    }, pattern.delay);
+                };
+
+                runPattern();
+
+                // Comentario inicial
+                setTimeout(() => {
+                    this.addComment(this.getRandomComment(), true);
+                }, 5000);
+            }
+
+            // Detener generación de comentarios
+            stopCommentGeneration() {
+                this.intervalIds.forEach(id => clearInterval(id));
+                this.intervalIds = [];
+            }
+        }
+
+        // Inicializar sistema de comentarios cuando la página carga
+        let commentSystem;
+
         // Navegación entre secciones
         function showSection(sectionId) {
             // Ocultar todas las secciones
@@ -479,6 +730,9 @@
             setTimeout(() => {
                 document.body.style.opacity = '1';
             }, 100);
+
+            // Inicializar sistema de comentarios
+            commentSystem = new CommentSystem();
         });
 
         // Tracking de clics para analytics (simple)
